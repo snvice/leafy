@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet OSM with GeoJSON Styling and Marker Slide</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        html, body, #map { height: 100%; margin: 0; padding: 0; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.marker.slideto@0.2.0/Leaflet.Marker.SlideTo.js"></script>
+    <script>
+        var map = L.map('map').setView([0.0236, 37.9062], 6); // Centered on Kenya
+
+        L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',{maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3']}).addTo(map);
+
+        function popUp(feature, layer) {
+            if (feature.properties && feature.properties.category) {
+                layer.bindPopup(feature.properties.category);
+            }
+        }
+
+        function styleFunction(feature) {
+            return {
+                fillColor: feature.properties.color || "#CC0000",
+                weight: 3,
+                opacity: 1,
+                color: 'red',
+                fillOpacity: 0
+            };
+        }
+
+        fetch('1.geojson')
+            .then(response => response.json())
+            .then(data => {
+                var geoJsonLayer = L.geoJSON(data, {
+                    style: styleFunction,
+                    onEachFeature: popUp
+                }).addTo(map);
+
+                map.fitBounds(geoJsonLayer.getBounds());
+
+                // Add a marker
+                var marker = L.marker([-1.2833945278235936, 36.8025543935523]).addTo(map);
+
+                // Define marker positions
+                var markerPositions = [
+                    { lat: -1.28339, lng: 36.80255, color: "green" },
+                    { lat: -1.28379, lng: 36.80286, color: "green" },
+                    { lat: -1.28583, lng: 36.80453, color: "green" },
+                    { lat: -1.28579, lng: 36.80467, color: "green" },
+                    { lat: -1.28560, lng: 36.80479, color: "green" },
+                    { lat: -1.28505, lng: 36.80511, color: "green" },
+                    { lat: -1.28441, lng: 36.80591, color: "green" },
+                    { lat: -1.28372, lng: 36.80660, color: "green" },
+                    { lat: -1.28305, lng: 36.80703, color: "green" },
+                    { lat: -1.28152, lng: 36.80722, color: "green" },
+                    { lat: -1.27988, lng: 36.80710, color: "green" },
+                    { lat: -1.27836, lng: 36.80611, color: "green" },
+                    { lat: -1.27793, lng: 36.80604, color: "green" },
+                    { lat: -1.27744, lng: 36.80616, color: "green" },
+                    { lat: -1.27699, lng: 36.80675, color: "green" },
+                    { lat: -1.27691, lng: 36.80754, color: "green" },
+                    { lat: -1.27749, lng: 36.80820, color: "green" },
+                    { lat: -1.27860, lng: 36.80854, color: "green" },
+                    { lat: -1.27872, lng: 36.80888, color: "green" },
+                    { lat: -1.27875, lng: 36.80980, color: "green" },
+                    { lat: -1.27880, lng: 36.81048, color: "green" },
+                    { lat: -1.27939, lng: 36.81142, color: "green" },
+                    { lat: -1.28008, lng: 36.81226, color: "green" },
+                    { lat: -1.28073, lng: 36.81296, color: "green" },
+                    { lat: -1.28206, lng: 36.81422, color: "green" },
+                    { lat: -1.28152, lng: 36.81506, color: "green" },
+                    { lat: -1.28208, lng: 36.81520, color: "green" },
+                    { lat: -1.28510, lng: 36.81663, color: "green" },
+                    { lat: -1.28931, lng: 36.81868, color: "green" },
+                    { lat: -1.29128, lng: 36.81966, color: "green" },
+                    { lat: -1.29121, lng: 36.82010, color: "green" },
+                    { lat: -1.29056, lng: 36.82126, color: "green" },
+                    { lat: -1.29019, lng: 36.82218, color: "green" }
+                ];
+
+
+                // Function to animate the marker movement
+                function animateMarker(index = 0) {
+                    const position = markerPositions[index];
+                    marker.slideTo([position.lat, position.lng], { duration: 800 }); // Slower speed
+
+                    // Handle the polyline only between actual points
+                    if (index > 0) {
+                        L.polyline([markerPositions[index - 1], [position.lat, position.lng]], {
+                            color: position.color,
+                            weight: 0,
+                            dashArray: 10,
+                        }).addTo(map);
+                    }
+
+                    // Continue to the next point or restart the loop
+                    setTimeout(() => {
+                        if (index + 1 < markerPositions.length) {
+                            animateMarker(index + 1);
+                        } else {
+                            // Start over without drawing a line from the last point to the first
+                            marker.slideTo([markerPositions[0].lat, markerPositions[0].lng], { duration: 300 });
+                            setTimeout(() => animateMarker(1), 3000);
+                        }
+                    }, 700); // Adjust delay to sync with marker movement
+                }
+
+                // Start the animation loop
+                animateMarker();
+            });
+    </script>
+</body>
+</html>
